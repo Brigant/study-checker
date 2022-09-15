@@ -10,23 +10,33 @@ import (
 )
 
 const (
-	dbhost string = "127.0.0.1"
-	dbport string = "49153"
+	dbhost string = "localhost"
+	dbport string = "49154"
 	dbname string = "postgres"
 	dbuser string = "checker"
 	dbpass string = "password"
+	dbType string = "postgres" //not mysql
 )
+
+// connect to database
+func conenctDatabase() (*sql.DB, error) {
+	psqlconn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable", dbhost, dbport, dbuser, dbpass, dbname)
+	db, err := sql.Open(dbType, psqlconn)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
 
 // return all users string json
 func GetAllUsers() (string, error) {
-	psqlconn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable", dbhost, dbport, dbuser, dbpass, dbname)
-	db, err := sql.Open("postgres", psqlconn)
+	db, err := conenctDatabase()
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer db.Close()
 
-	rows, err := db.Query(`SELECT id, name, email, active, password FROM "user"`)
+	rows, err := db.Query(`SELECT id, name, email, active, created, modified FROM "user"`)
 	if err != nil {
 		return "", err
 	}
@@ -36,7 +46,7 @@ func GetAllUsers() (string, error) {
 	for rows.Next() {
 		var user = models.User{}
 
-		err := rows.Scan(&user.Id, &user.FullName, &user.Email, &user.Active, &user.Password)
+		err := rows.Scan(&user.Id, &user.FullName, &user.Email, &user.Active, &user.Created, &user.Modified)
 		if err != nil {
 			return "", err
 		}
@@ -53,13 +63,10 @@ func GetAllUsers() (string, error) {
 
 // return all user's emails
 func GetEmails() ([]string, error) {
-	psqlconn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable", dbhost, dbport, dbuser, dbpass, dbname)
-	db, err := sql.Open("postgres", psqlconn)
+	db, err := conenctDatabase()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	defer db.Close()
-
 	rows, err := db.Query(`SELECT email FROM "user"`)
 	if err != nil {
 		return nil, err
@@ -83,15 +90,14 @@ func GetEmails() ([]string, error) {
 
 // create user in database
 func CreateUser(u models.User) error {
-	psqlconn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable", dbhost, dbport, dbuser, dbpass, dbname)
-	db, err := sql.Open("postgres", psqlconn)
+	db, err := conenctDatabase()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer db.Close()
 
-	dbRequest := `INSERT INTO public."user" (id, "name", email, active, "password") VALUES($1, $2, $3, $4, $5);`
-	_, err = db.Exec(dbRequest, u.Id, u.FullName, u.Email, u.Active, u.Password)
+	dbRequest := `INSERT INTO public.user (id, name, email, active, password, created, modified ) VALUES($1, $2, $3, $4, $5, $6, $7);`
+	_, err = db.Exec(dbRequest, u.Id, u.FullName, u.Email, u.Active, u.Password, u.Created, u.Modified)
 	if err != nil {
 		return err
 	}
