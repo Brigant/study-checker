@@ -1,22 +1,20 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
-	"log"
 	"net/mail"
 	"strings"
 	"unicode"
 )
 
 type User struct {
-	Id       string
-	FullName string `json:"fullname"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Active   bool   `json:"active"`
-	Created  string `json:"created_"`
-	Modified string `json:"modified"`
+	Id         string
+	FullName   string `json:"fullname"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	Active     bool   `json:"active"`
+	Created_at string `json:"created_at"`
+	Updated_at string `json:"updated_at"`
 }
 
 // validate user's field
@@ -41,15 +39,15 @@ func (u *User) ValidateUserField() error {
 }
 
 // retur user JSON bytes
-func (u User) ReturnJsonString() string {
-	u.Password = "******"
-	str, err := json.Marshal(u)
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-	return string(str)
-}
+// func (u User) ReturneInJSON() string {
+// 	u.Password = "******"
+// 	str, err := json.Marshal(u)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return ""
+// 	}
+// 	return string(str)
+// }
 
 // helper function for ASCII belonging
 func isASCII(s string) bool {

@@ -9,9 +9,8 @@ import (
 	"study-checker/helpers"
 	"study-checker/models"
 	"study-checker/storage"
-	"time"
 
-	"github.com/google/uuid"
+	// "github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -48,11 +47,11 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(headerName, headerValue)
 
 	var (
-		user            models.User
-		acceptable      bool
-		isEmailInDB     bool
+		user       models.User
+		acceptable bool
+		// isEmailInDB     bool
 		errWrongRequest = errors.New("wrong request: check headers or request body")
-		errUserExists   = errors.New("user already exists")
+		// errUserExists   = errors.New("user already exists")
 	)
 
 	//check request validity
@@ -79,40 +78,21 @@ func signIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create and fill struct User
-	user.Id = uuid.New().String()
+
+	// user.Id = uuid.New().String()
 	user.Active = true
-	user.Created = time.Now().Format("2006-01-02 15:04:05")
-	user.Modified = time.Now().Format("2006-01-02 15:04:05")
 	if err := user.ValidateUserField(); err != nil {
 		w.WriteHeader(http.StatusNotAcceptable)
 		w.Write([]byte(helpers.ReturnErrorJson(err)))
 		return
 	}
 
-	emails, err := storage.GetEmails()
-	if err != nil {
+	if err := storage.CreateUser(user); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(helpers.ReturnErrorJson(err)))
 		return
 	}
-	for _, emailInDB := range emails {
-		if emailInDB == user.Email {
-			isEmailInDB = true
-		}
-	}
-
-	if isEmailInDB {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(helpers.ReturnErrorJson(errUserExists)))
-		return
-	}
-
-	if err := storage.CreateUser(user); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(helpers.ReturnErrorJson(errUserExists)))
-		return
-	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(user.ReturnJsonString()))
+	w.Write([]byte(helpers.ReturnOkJson("Ok")))
 }

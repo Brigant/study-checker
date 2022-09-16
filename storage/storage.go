@@ -11,10 +11,10 @@ import (
 
 const (
 	dbhost string = "localhost"
-	dbport string = "49154"
-	dbname string = "postgres"
-	dbuser string = "checker"
-	dbpass string = "password"
+	dbport string = "5432"
+	dbname string = "study"
+	dbuser string = "ps_user"
+	dbpass string = "SimplePass"
 	dbType string = "postgres" //not mysql
 )
 
@@ -36,7 +36,7 @@ func GetAllUsers() (string, error) {
 	}
 	defer db.Close()
 
-	rows, err := db.Query(`SELECT id, name, email, active, created, modified FROM "user"`)
+	rows, err := db.Query(`SELECT id, name, email, active, created_at, updated_at FROM "user"`)
 	if err != nil {
 		return "", err
 	}
@@ -46,7 +46,7 @@ func GetAllUsers() (string, error) {
 	for rows.Next() {
 		var user = models.User{}
 
-		err := rows.Scan(&user.Id, &user.FullName, &user.Email, &user.Active, &user.Created, &user.Modified)
+		err := rows.Scan(&user.Id, &user.FullName, &user.Email, &user.Active, &user.Created_at, &user.Updated_at)
 		if err != nil {
 			return "", err
 		}
@@ -96,8 +96,8 @@ func CreateUser(u models.User) error {
 	}
 	defer db.Close()
 
-	dbRequest := `INSERT INTO public.user (id, name, email, active, password, created, modified ) VALUES($1, $2, $3, $4, $5, $6, $7);`
-	_, err = db.Exec(dbRequest, u.Id, u.FullName, u.Email, u.Active, u.Password, u.Created, u.Modified)
+	dbRequest := `INSERT INTO public.user (name, email, active, password) VALUES($1, $2, $3, md5($4));`
+	_, err = db.Exec(dbRequest, u.FullName, u.Email, u.Active, u.Password)
 	if err != nil {
 		return err
 	}
