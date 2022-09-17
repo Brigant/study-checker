@@ -4,9 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"study-checker/models"
 
-	_ "github.com/lib/pq"
+	"study-checker/models"
 )
 
 const (
@@ -15,91 +14,115 @@ const (
 	dbname string = "study"
 	dbuser string = "ps_user"
 	dbpass string = "SimplePass"
-	dbType string = "postgres" //not mysql
+	dbType string = "postgres" // not mysql.
 )
 
-// connect to database
+// Connect to database.
 func conenctDatabase() (*sql.DB, error) {
-	psqlconn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable", dbhost, dbport, dbuser, dbpass, dbname)
-	db, err := sql.Open(dbType, psqlconn)
+	psqlconn := fmt.Sprintf("host=%v port=%v user=%v password=%v dbname=%v sslmode=disable",
+		dbhost, dbport, dbuser, dbpass, dbname)
+
+	dataBase, err := sql.Open(dbType, psqlconn)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("conectDatabase(): %w", err)
 	}
-	return db, nil
+
+	return dataBase, nil
 }
 
-// return all users string json
+// Return all users string json.
 func GetAllUsers() (string, error) {
-	db, err := conenctDatabase()
+	dataBase, err := conenctDatabase()
 	if err != nil {
 		return "", err
 	}
-	defer db.Close()
+	defer dataBase.Close()
 
-	rows, err := db.Query(`SELECT id, name, email, active, created_at, updated_at FROM "user"`)
+	rows, err := dataBase.Query(`SELECT id, name, email, active, created_at, updated_at FROM "user"`)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("dataBase.Query(): %w", err)
 	}
 	defer rows.Close()
 
-	var users = []models.User{}
-	for rows.Next() {
-		var user = models.User{}
+	users := []models.User{}
 
-		err := rows.Scan(&user.Id, &user.FullName, &user.Email, &user.Active, &user.Created_at, &user.Updated_at)
+	for rows.Next() {
+		user := models.User{
+			ID:        "",
+			FullName:  "",
+			Email:     "",
+			Password:  "",
+			Active:    true,
+			CreatedAt: "",
+			UpdatedAt: "",
+		}
+
+		err := rows.Scan(&user.ID, &user.FullName, &user.Email, &user.Active, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("rows.Scan: %w", err)
 		}
 
 		users = append(users, user)
 	}
+
+	if rows.Err() != nil {
+		return "", fmt.Errorf("%w,", err)
+	}
+
 	res, err := json.Marshal(users)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("marshal: %w", err)
 	}
 
 	return string(res), nil
 }
 
-// return all user's emails
+// Return all user's emails.
 func GetEmails() ([]string, error) {
 	db, err := conenctDatabase()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w,", err)
 	}
+
 	rows, err := db.Query(`SELECT email FROM "user"`)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w,", err)
 	}
 	defer rows.Close()
 
-	var emails = []string{}
+	emails := []string{}
+
 	for rows.Next() {
 		var email string
 
 		err := rows.Scan(&email)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w,", err)
 		}
 
 		emails = append(emails, email)
 	}
 
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("%w,", err)
+	}
+
 	return emails, nil
 }
 
-// create user in database
-func CreateUser(u models.User) error {
-	db, err := conenctDatabase()
+// Create user in database.
+func CreateUser(user models.User) error {
+	dataBase, err := conenctDatabase()
 	if err != nil {
-		return err
+		return fmt.Errorf("%w,", err)
 	}
-	defer db.Close()
+	defer dataBase.Close()
 
 	dbRequest := `INSERT INTO public.user (name, email, active, password) VALUES($1, $2, $3, md5($4));`
-	_, err = db.Exec(dbRequest, u.FullName, u.Email, u.Active, u.Password)
+
+	_, err = dataBase.Exec(dbRequest, user.FullName, user.Email, user.Active, user.Password)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w,", err)
 	}
 
 	return nil
