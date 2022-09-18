@@ -21,7 +21,7 @@ const (
 	headerValue  string = "application/json"
 )
 
-var errWrongRequest = errors.New("wrong request: check request headers")
+var errWrongRequest = errors.New("wrong request")
 
 func main() {
 	r := mux.NewRouter()
