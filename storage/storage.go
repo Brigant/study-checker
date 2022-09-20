@@ -63,7 +63,7 @@ func GetAllUsers() (string, error) {
 		}
 
 		users = append(users, user)
-	}
+	}~
 
 	if rows.Err() != nil {
 		return "", fmt.Errorf("%w,", err)
@@ -75,6 +75,39 @@ func GetAllUsers() (string, error) {
 	}
 
 	return string(res), nil
+}
+
+// Return all user's emails.
+func GetEmails() ([]string, error) {
+	db, err := conenctDatabase()
+	if err != nil {
+		return nil, fmt.Errorf("%w,", err)
+	}
+
+	rows, err := db.Query(`SELECT email FROM "user"`)
+	if err != nil {
+		return nil, fmt.Errorf("%w,", err)
+	}
+	defer rows.Close()
+
+	emails := []string{}
+
+	for rows.Next() {
+		var email string
+
+		err := rows.Scan(&email)
+		if err != nil {
+			return nil, fmt.Errorf("%w,", err)
+		}
+
+		emails = append(emails, email)
+	}
+
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("%w,", err)
+	}
+
+	return emails, nil
 }
 
 // Create user in database.
